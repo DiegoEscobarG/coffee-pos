@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS CAFETERIA</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6b4423">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <!-- ============================= 
+        PANTALLA DE LOGIN
+    ===============================-->
+        <div id="loginScreen" class="login-screen"> <!--se agrega hidden temporal para trabajar en otras secciones-->
+            <div class="login-container">
+                <div class="login-card">
+                    <div class="login-logo">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2,21H20V19H2M20,8H18V5H20M20,3H4V13A4,4 0 0,0 8,17H14A4,4 0 0,0 18,13V10H20A2,2 0 0,0 22,8V5C22,3.89 21.1,3 20,3Z"/>
+                        </svg>
+                        <h1>POS CAFETERIA</h1>
+                        <p>Sistema de Punto de Venta</p>
+                    </div>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="user">Usuario</label>
+                            <input type="text" id="user" class="input" placeholder="Ingresa tu Usuario" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Contraseña</label>
+                            <input type="password" id="password" class="input" placeholder="Ingresa tu Contraseña">
+                        </div>
+                        <button type="submit" id="btnLogin" class="btn btn-primary btn-lg" style="width: 100%;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M10,17V14H3V10H10V7L15,12L10,17M10,2H19A2,2 0 0,1 21,4V20A2,2 0 0,1 19,22H10A2,2 0 0,1 8,20V18H10V20H19V4H10V6H8V4A2,2 0 0,1 10,2Z"/>
+                            </svg>
+                            Iniciar Sesión
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================
+            LAYOUT PRINCIPAL (OCULTO HASTA LOGIN)
+        ===================================== -->
+        <div id="app-container" class="app-container hidden">
+
+            <!-- SIDEBAR -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2,21H20V19H2M20,8H18V5H20M20,3H4V13A4,4 0 0,0 8,17H14A4,4 0 0,0 18,13V10H20A2,2 0 0,0 22,8V5C22,3.89 21.1,3 20,3Z"/>
+                        </svg>
+                        <h2>POS CAFETERIA</h2>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-avatar">A</div>
+                        <div class="user-details">
+                            <h3 id="userName">Administrador</h3>
+                            <p id="userRole">Gerente</p>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <a href="#" class="nav-item active" data-screen="pos">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17,18A2,2 0 0,1 19,20A2,2 0 0,1 17,22C15.89,22 15,21.1 15,20C15,18.89 15.89,18 17,18M1,2H4.27L5.21,4H20A1,1 0 0,1 21,5C21,5.17 20.95,5.34 20.88,5.5L17.3,11.97C16.96,12.58 16.3,13 15.55,13H8.1L7.2,14.63L7.17,14.75A0.25,0.25 0 0,0 7.42,15H19V17H7C5.89,17 5,16.1 5,15C5,14.65 5.09,14.32 5.24,14.04L6.6,11.59L3,4H1V2M7,18A2,2 0 0,1 9,20A2,2 0 0,1 7,22C5.89,22 5,21.1 5,20C5,18.89 5.89,18 7,18M16,11L18.78,6H6.14L8.5,11H16Z"/>
+                        </svg>
+                        Ventas
+                    </a>
+                    <a href="#" class="nav-item" data-screen="products">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,3L2,12H5V20H19V12H22L12,3M11,8H13V11H16V13H13V16H11V13H8V11H11V8Z"/>
+                        </svg>
+                        Productos
+                    </a>
+                    <a href="#" class="nav-item" data-screen="reports">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3,3H11V11H3M13,3H21V11H13M3,13H11V21H3M18,13H21V21H18M13,18H16V21H13M13,13H16V16H13"/>
+                        </svg>
+                        Reportes
+                    </a>
+                    <a href="#" class="nav-item" data-screen="config">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+                        </svg>
+                        Configuración
+                    </a>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <button class="btn btn-secondary" style="width: 100%;" id="logoutBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16,17V14H9V10H16V7L21,12L16,17M14,2A2,2 0 0,1 16,4V6H14V4H5V20H14V18H16V20A2,2 0 0,1 14,22H5A2,2 0 0,1 3,20V4A2,2 0 0,1 5,2H14Z"/>
+                        </svg>
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </aside>
+
+            <!-- CONTENIDO PRINCIPAL -->
+            <main class="main-content">
+
+                <!-- TOPBAR -->
+                <header class="topbar">
+                    <div class="topbar-left">
+                        <h1 id="screenTitle">Punto de venta</h1>
+                    </div>
+                    <div class="topbar-right">
+                        <div class="topbar-time" id="currentTime">4:56 AM</div>
+                        <div class="topbar-date" id="currentDate">Miércoles, 4 Febrero 2026</div>
+                    </div>
+                </header>
+
+                <!-- AREA DE CONTENIDO -->
+                <div class="content-area">
+
+                    <!-- =======================
+                        PANTALLA: PUNTO DE VENTA
+                    ======================== -->
+
+                    <div id="posScreen" class="screen-content hidden"> <!--No se te olvide quitar el hidden-->
+                        <div class="pos-container">
+
+                            <!-- SECCION DE PRODUCTOS -->
+                            <div class="products-section">
+                                <div class="search-bar">
+                                    <svg class="search-icon" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+                                    </svg>
+                                    <input type="text" class="input" id="productSearch" placeholder="Buscar">
+                                </div>
+                                
+                                <div class="categories" id="categories">
+                                    <button class="category-btn active" data-category="all">Todos</button>
+                                    <button class="category-btn" data-category="bebidas-calientes">☕ Bebidas Calientes</button>
+                                    <button class="category-btn" data-category="bebidas-frias">🥤 Bebidas Frías</button>
+                                    <button class="category-btn" data-category="postres">🍰 Postres</button>
+                                    <button class="category-btn" data-category="alimentos">🥪 Alimentos</button>
+                                </div>
+
+                                <div class="products-grid" id="productsGrid">
+                                    <!-- LOS PRODUCTOS SE CARGARAN DINAMICAMENTE EN JS-->
+                                    <!--No se te olvide que cada elemento/producto tendrá:
+                                    class = "product-card
+                                    class = "product-image
+                                    class = "product-name
+                                    class = "product-price
+                                    class = product-stock"-->
+                                </div>
+                            </div>
+
+                            <!-- SECCION DE CARRITO -->
+                            <div class="cart-section">
+                                <div class="cart-header">
+                                    <h2>
+                                        Carrito
+                                        <span class="cart-badge" id="cartCount">0</span>
+                                    </h2>
+                                </div>
+
+                                <div class="cart-items" id="cartItems">
+                                    <div class="cart-empty">
+                                        <svg viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M17,18A2,2 0 0,1 19,20A2,2 0 0,1 17,22C15.89,22 15,21.1 15,20C15,18.89 15.89,18 17,18M1,2H4.27L5.21,4H20A1,1 0 0,1 21,5C21,5.17 20.95,5.34 20.88,5.5L17.3,11.97C16.96,12.58 16.3,13 15.55,13H8.1L7.2,14.63L7.17,14.75A0.25,0.25 0 0,0 7.42,15H19V17H7C5.89,17 5,16.1 5,15C5,14.65 5.09,14.32 5.24,14.04L6.6,11.59L3,4H1V2M7,18A2,2 0 0,1 9,20A2,2 0 0,1 7,22C5.89,22 5,21.1 5,20C5,18.89 5.89,18 7,18M16,11L18.78,6H6.14L8.5,11H16Z"/>
+                                        </svg>
+                                        <p>Carrito vacío</p>
+                                        <small>Agrega productos para comenzar</small>
+                                    </div>
+                                </div>
+
+                                <div class="cart-summary">
+                                    <div class="summary-row">
+                                        <span>Subtotal:</span>
+                                        <span id="subtotal">$0.00</span>
+                                    </div>
+                                    <div class="summary-row">
+                                        <!--<span>IVA (16%):</span>-->
+                                        <!--<span id="iva">$0.00</span>-->
+                                    </div>
+                                    <div class="summary-row total">
+                                        <span>Total:</span>
+                                        <span id="total">$0.00</span>
+                                    </div>
+
+                                    <div class="cart actions">
+                                        <button class="btn btn-success" id="checkoutBtn">
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z"/>
+                                            </svg>
+                                            Cobrar
+                                        </button>
+                                        <button class="btn btn-secondary" id="clearCartBtn" style="margin-top: 10px; width: 100%;">
+                                            Vaciar Carrito
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- =============================
+                        PANTALLA: GESTION DE PRODUCTOS
+                    ============================== -->
+                        <div class="screen-content hidden" id="productsScreen"> <!--No se te olvide agregar el hidden-->
+                            <div class="products-managment">
+                                <div class="managment-header">
+                                    <h2>Gestión de Productos</h2>
+                                    <button class="btn btn-primary" id="addProductBtn" onclick="openAddProductModal()">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
+                                        </svg>
+                                        Nuevo Producto
+                                    </button>
+                                </div>
+
+                                <div class="card">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Imagen</th>
+                                                <th>Nombre</th>
+                                                <th>Categoría</th>
+                                                <th>Precio</th>
+                                                <th>Stock</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="productsTable">
+                                            <!--Los productos se harán desde js-->
+                                        </tbody>
+                                        <!--Modal para editar los productos en la gestion de productos-->
+                                        <div class="modal-edit-overlay" id="editModal" style="display: none;">
+                                            <div class="modal-edit-content">
+                                                <h3>Editar Producto</h3>
+                                                <form id="editForm">
+                                                    <input type="hidden" id="editId">
+
+                                                    <div class="form-edit-group">
+                                                        <label>Emoji:</label>
+                                                        <select class="input" id="editEmoji">
+                                                            <option value="☕">☕ Café</option>
+                                                            <option value="🥐">🥐 Croissant</option>
+                                                            <option value="🍰">🍰 Pastel</option>
+                                                            <option value="🥤">🥤 Bebida Fría</option>
+                                                            <option value="🥪">🥪 Sándwich</option>
+                                                            <option value="🧁">🧁 Muffin</option>
+                                                            <option value="🍪">🍪 Galleta</option>
+                                                            <option value="🍫">🍫 Chocolate</option>
+                                                            <option value="🧋">🧋 Té</option>
+                                                            <option value="🥯">🥯 Bagel</option>
+                                                            <option value="🥗">🥗 Ensalada</option>
+                                                            <option value="🥖">🥖 Pan</option>
+                                                        </select>
+                                                    </div>
+    
+                                                    <div class="form-edit-group">
+                                                        <label>Nombre:</label>
+                                                        <input class="input" type="text" id="editName" required>
+                                                    </div>
+    
+                                                    <div class="form-edit-group">
+                                                        <label>Categoría:</label>
+                                                        <select id="editCategory">
+                                                            <option value="bebidas-calientes">Bebidas Calientes</option>
+                                                            <option value="bebidas-frias">Bebidas Frías</option>
+                                                            <option value="postres">Postres</option>
+                                                            <option value="alimentos">Alimentos</option>
+                                                        </select>
+                                                    </div>
+    
+                                                    <div class="form-edit-group">
+                                                        <label>Precio ($):</label>
+                                                        <input class="input" type="number" id="editPrice" step="0.01" required>
+                                                    </div>
+    
+                                                    <div class="form-edit-group">
+                                                        <label>Stock:</label>
+                                                        <input class="input" type="number" id="editStock" required>
+                                                    </div>
+    
+                                                    <div class="form-edit-group">
+                                                        <label>Estado:</label>
+                                                        <select id="editStatus">
+                                                            <option value="true">Activo</option>
+                                                            <option value="false">Inactivo</option>
+                                                        </select>
+                                                    </div>
+    
+                                                    <div class="modal-edit-actions">
+                                                        <button type="button" onclick="closeModal()" class="btn btn-danger cancel-btn">Cancelar</button>
+                                                        <button type="button" onclick="saveEditedProduct()" class="btn btn-success save-btn">Guardar Cambios</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </table>
+                                    
+
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ===================
+                            PANTALLA DE REPORTES
+                        ==================== -->
+                        <div class="screen-content hidden" id="reportsScreen">
+                        </div>
+
+                        <!-- ========================
+                            PANTALLA DE CONFIGURACION 
+                        ============================ -->
+
+                        <div id="configScreen" class="screen-content hidden">
+                            <div class="config-container">
+                                <div class="card">
+                                    <h2>Configuración General</h2>
+
+                                    <div class="config-section">
+                                        <h3>Información del Negocio</h3>
+                                        <div class="form-group">
+                                            <label>Nombre del Negocio</label>
+                                            <input type="text" class="input" value="El Rincón de Alex">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>RFC</label>
+                                            <input type="text" class="input" value="CAF123456ABC">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Dirección</label>
+                                            <input type="text" class="input" value="Av. Principal 123, Col. Centro">
+                                        </div>
+                                    </div>
+
+                                    <div class="config-section">
+                                        <h3>Impresión</h3>
+                                        <div class="form-group">
+                                            <!-- <label class="input"></label> -->
+                                            <select class="input">
+                                                <option>PDF (Impresora Normal)</option>
+                                                <option>Térmica de 80mm</option>
+                                                <option>Térmica de 58mm</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" checked> Imprimir automáticamente después de cobrar
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <button class="btn btn-primary">Guardar Cambios</button>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            </main>
+        </div>
+
+        <div class="modal hidden" id="paymentModal">
+            <div class="modal-overlay"></div> <!--Este div es para para oscurecer el detrás del div de pago (la pantalla principal)-->
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h2>Procesar Pago</h2>
+                    <button id="closePaymentModal" class="modal-close">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="payment-summary">
+                        <span>Total a pagar:</span>
+                        <span class="payment-amount" id="paymentTotal">$0.00</span>
+                    </div>
+
+
+                    <div class="payment-methods">
+                        <h3>Método de Pago</h3>
+                        <div class="payment-method-grid">
+                            <button class="payment-method-btn active" data-method="efectivo">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                                </svg>
+                                <span>Efectivo</span>
+                            </button>
+                            <button class="payment-method-btn" data-method="tarjeta">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/>
+                                </svg>
+                                <span>Tarjeta</span>
+                            </button>
+                            <button class="payment-method-btn" data-method="transferencia">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M2,5H22V20H2V5M20,18V7H4V18H20M17,8A2,2 0 0,0 19,10V15A2,2 0 0,0 17,17H7A2,2 0 0,0 5,15V10A2,2 0 0,0 7,8H17M17,13V12H15V13H17M13,13V12H7V13H13M17,15V14H13V15H17M11,15V14H7V15H11Z"/>
+                                </svg>
+                                <span>Transferencia</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="cash-payment" id="cashPaymentSection">
+                        <div class="form-group">
+                            <label>Monto Recibido</label>
+                            <input type="number" class="input input-lg" id="receivedAmount" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="change-display">
+                            <span>Cambio:</span>
+                            <span class="change-amount" id="changeAmount">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancelPaymentBtn">Cancelar</button>
+                    <button class="btn btn-success btn-lg" id="confirmPaymentBtn">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z"/>
+                        </svg>
+                        Confirmar Pago
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script src="js/app.js"></script>
+</body>
+</html>
