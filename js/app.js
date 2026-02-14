@@ -52,6 +52,14 @@ let cart = []; //Carrito de compras vacío
 let currentCategory = 'all'; //Categoría seleccionada en el filtro de productos
 let currentScreen = 'pos' //Pantalla activa que se está mostrando
 
+// Llaves para localstorage
+const STORAGE_KEYS = {
+    PRODUCTS: 'posApp_products',
+    SALES_HISTORY: 'posApp_salesHistory',
+    CART: 'posApp_cart',
+    CATEGORY: 'posApp_currentCategory'
+};
+
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
@@ -60,10 +68,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initializeApp(){
 
+    // Carga de datos guardados (localstorage)
+    loadAllData();
+
     // Login del POS
     const loginForm = document.getElementById('loginForm');
     const btnLogin = document.getElementById('btnLogin');
     btnLogin.addEventListener('click', handleLogin);
+
+    // Logout del POS
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    currentUser = null;
+    cart = [];
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('posScreen').classList.add('hidden');
+    document.getElementById('loginForm').reset();
+})
 
     // Navegación
     setupNavigation();
@@ -111,15 +131,6 @@ function handleLogin(e){
         alert('Credenciales incorrectas');
     }
 }
-
-// Logout
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    currentUser = null;
-    cart = [];
-    document.getElementById('loginScreen').classList.remove('hidden');
-    document.getElementById('posScreen').classList.add('hidden');
-    document.getElementById('loginForm').reset();
-})
 
 //Navegación
 function setupNavigation(){
@@ -238,6 +249,9 @@ function handleCategoryChange(btn) {
     
     // Actualizar categoría actual
     currentCategory = btn.dataset.category;
+
+    // Guarda en localstorage
+    saveCategory();
     
     // Re-renderizar productos
     renderProducts();
@@ -262,6 +276,7 @@ function addToCart(product) {
         });
     }
     
+    saveCart(); // Guarda cambios en localstorage
     renderCart();
     updateCartSummary();
 }
@@ -455,6 +470,7 @@ function processPayment() {
 
     // 2. Guardar en el historial
     salesHistory.push(currentSale);
+    saveSalesHistory();
     
     // Simulación de procesamiento de pago
     alert('¡Pago procesado exitosamente!');
@@ -678,7 +694,10 @@ function saveEditedProduct() {
             active: newStatus
         };
 
-        // Cerrar el modal y refrescar la tabla
+        saveProducts();
+
+        // Cerrar el modal, guardar en localstorage y refrescar la tabla
+        saveProducts(); 
         closeModal();
         renderProductsTable();
         renderProducts(); // Si quieres que los cambios se reflejen también en la vista de productos
@@ -698,10 +717,10 @@ function deleteProduct(id) {
         // Filtramos el array: dejamos todos los productos EXCEPTO el que tiene el ID recibido
         productsData = productsData.filter(product => product.id !== id);
 
-        // Actualizamos las vistas en tiempo real
+        // Actualizamos las vistas y guardamos en localstorage en tiempo real
+        saveProducts(); // Guarda en localstorage
         renderProductsTable(); // Refresca la tabla de administración
         renderProducts();      // Refresca la cuadrícula de ventas (POS)
-
         alert(`Producto fue eliminado correctamente.`);
     }
 }
@@ -759,12 +778,106 @@ function saveNewProduct() {
     // 5. Agregarlo al array principal
     productsData.push(newProduct);
 
-    // 6. Actualizar las vistas y cerrar
+    // 6. Actualizar las vistas, guardar en localstorage y cerrar
+    saveProducts(); // Guarda en localstorage
     renderProductsTable(); // Actualiza tabla
     renderProducts();      // Actualiza POS
     closeModal();
     
     alert('¡Producto agregado exitosamente!');
+}
+
+// Persistencia con localstorage (Guardar todo en localstorage)
+// Función para guardar productos
+function saveProducts() {
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(productsData));
+}
+
+// Función para cargar productos
+function loadProducts() {
+    const stored = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
+    if (stored) {
+        try {
+            productsData = JSON.parse(stored);
+        } catch (error) {
+            console.error('Error al cargar productos:', error);
+            // Si hay error, mantener los datos iniciales
+        }
+    }
+}
+
+// Función para guardar historial de ventas
+function saveSalesHistory() {
+    localStorage.setItem(STORAGE_KEYS.SALES_HISTORY, JSON.stringify(salesHistory));
+}
+
+// Función para cargar historial de ventas
+function loadSalesHistory() {
+    const stored = localStorage.getItem(STORAGE_KEYS.SALES_HISTORY);
+    if (stored) {
+        try {
+            salesHistory = JSON.parse(stored);
+        } catch (error) {
+            console.error('Error al cargar historial de ventas:', error);
+            salesHistory = [];
+        }
+    }
+}
+
+// Función para guardar carrito
+function saveCart() {
+    localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(cart));
+}
+
+// Función para cargar carrito
+function loadCart() {
+    const stored = localStorage.getItem(STORAGE_KEYS.CART);
+    if (stored) {
+        try {
+            cart = JSON.parse(stored);
+        } catch (error) {
+            console.error('Error al cargar carrito:', error);
+            cart = [];
+        }
+    }
+}
+
+// Función para guardar categoría actual
+function saveCategory() {
+    localStorage.setItem(STORAGE_KEYS.CATEGORY, currentCategory);
+}
+
+// Función para cargar categoría actual
+function loadCategory() {
+    const stored = localStorage.getItem(STORAGE_KEYS.CATEGORY);
+    if (stored) {
+        currentCategory = stored;
+    }
+}
+
+// Función maestra para cargar TODO al iniciar
+function loadAllData() {
+    loadProducts();
+    loadSalesHistory();
+    loadCart();
+    loadCategory();
+}
+
+// Función maestra para guardar TODO
+function saveAllData() {
+    saveProducts();
+    saveSalesHistory();
+    saveCart();
+    saveCategory();
+}
+
+// Ver qué hay en localStorage (para debug)
+function debugLocalStorage() {
+    console.log('=== localStorage ===');
+    console.log('Productos:', JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS)));
+    console.log('Historial:', JSON.parse(localStorage.getItem(STORAGE_KEYS.SALES_HISTORY)));
+    console.log('Carrito:', JSON.parse(localStorage.getItem(STORAGE_KEYS.CART)));
+    console.log('Categoría:', localStorage.getItem(STORAGE_KEYS.CATEGORY));
 }
 
 // FUNCIONES GLOBALES (necesarias para onclick en HTML)
@@ -773,3 +886,7 @@ window.removeFromCart = removeFromCart;
 window.updateQuantity = updateQuantity;
 window.editProduct = editProduct;
 window.deleteProduct = deleteProduct;
+window.closeModal = closeModal;
+window.saveEditedProduct = saveEditedProduct;
+window.saveNewProduct = saveNewProduct;
+window.openAddProductModal = openAddProductModal;
