@@ -232,8 +232,8 @@ function createProductCard(product) {
         stockText = 'Agotado';
     }
     
-    //<span class="product-stock ${stockClass}">${stockText}</span>
     card.innerHTML = `
+        <span class="product-stock ${stockClass}">${stockText}</span>
         <div class="product-image">${product.emoji}</div>
         <div class="product-name">${product.name}</div>
         <div class="product-price">$${product.price.toFixed(2)}</div>
