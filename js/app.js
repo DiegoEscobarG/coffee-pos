@@ -440,6 +440,23 @@ function calculateChange() {
     }
 }
 
+// Descuenta del inventario los productos del carrito confirmado
+function deductInventory(cartItems) {
+    cartItems.forEach(cartItem => {
+        const product = productsData.find(p => p.id === cartItem.id);
+        if (product) {
+            product.stock = Math.max(0, product.stock - cartItem.quantity);
+        }
+    });
+
+    // Guardar inventario actualizado en localStorage
+    saveProducts();
+
+    // Refrescar la vista de productos para mostrar el stock actualizado
+    renderProducts();
+    renderProductsTable();
+}
+
 function processPayment() {
     const activeMethod = document.querySelector('.payment-method-btn.active');
     
@@ -460,7 +477,7 @@ function processPayment() {
         }
     }
     
-        // 1. Crear el objeto de la venta actual
+        // Crear el objeto de la venta actual
     const currentSale = {
         id: Date.now(), // ID único basado en el tiempo
         date: new Date().toLocaleDateString(), // Fecha de hoy
@@ -468,9 +485,12 @@ function processPayment() {
         total: total
     };
 
-    // 2. Guardar en el historial
+    // Guardar en el historial
     salesHistory.push(currentSale);
     saveSalesHistory();
+
+    // Descontar del inventario los productos vendidos
+    deductInventory(cart);
     
     // Simulación de procesamiento de pago
     alert('¡Pago procesado exitosamente!');
