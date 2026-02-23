@@ -111,6 +111,9 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
         btn.addEventListener('click', () => handleCategoryChange(btn));
     });
 
+    // Cargar historial de folios (Recibos y Mermas)
+    cargarContadorFolios();
+
 }
 
 // Login
@@ -131,6 +134,41 @@ function handleLogin(e){
         alert('Credenciales incorrectas');
     }
 }
+
+// Fullscreen
+// Pantalla completa
+function toggleFullscreen() {
+    const iconExpand = "M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17V19H5V14H7V17H10Z";
+    const iconCollapse = "M14,14H19V16H16V19H14V14M5,14H10V19H8V16H5V14M8,5H10V10H5V8H8V5M19,8H16V5H14V10H19V8Z";
+
+    if (!document.fullscreenElement) {
+        // Entrar a pantalla completa
+        document.documentElement.requestFullscreen()
+            .then(() => {
+                document.querySelector('#iconFullscreen path').setAttribute('d', iconCollapse);
+            })
+            .catch(err => {
+                console.error('Error al entrar en pantalla completa:', err);
+            });
+    } else {
+        // Salir de pantalla completa
+        document.exitFullscreen()
+            .then(() => {
+                document.querySelector('#iconFullscreen path').setAttribute('d', iconExpand);
+            });
+    }
+}
+
+// Detectar si el usuario sale con Escape y actualizar el ícono
+document.addEventListener('fullscreenchange', () => {
+    const iconExpand = "M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17V19H5V14H7V17H10Z";
+    const iconCollapse = "M14,14H19V16H16V19H14V14M5,14H10V19H8V16H5V14M8,5H10V10H5V8H8V5M19,8H16V5H14V10H19V8Z";
+
+    const path = document.querySelector('#iconFullscreen path');
+    if (path) {
+        path.setAttribute('d', document.fullscreenElement ? iconCollapse : iconExpand);
+    }
+});
 
 //Navegación
 function setupNavigation(){
@@ -227,7 +265,7 @@ function createProductCard(product) {
     if (product.stock < 10) {
         stockClass = 'low';
         stockText = `¡${product.stock}!`;
-    } else if (product.stock === 0) {
+    } if (product.stock === 0) {
         stockClass = 'out';
         stockText = 'Agotado';
     }
