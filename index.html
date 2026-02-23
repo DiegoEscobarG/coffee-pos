@@ -319,6 +319,154 @@
                         <div class="screen-content hidden" id="reportsScreen">
                         </div>
 
+                        <!-- ===================
+                            PANTALLA DE RECIBO
+                        ==================== -->
+                        <div class="screen-content receipt-grid hidden" id="receiptScreen">
+
+                            <!-- Columna RECIBO -->
+                            <div class="receipt-col">
+                                <div class="receipt-col__header">
+                                    <div class="receipt-col__icon receipt-col__icon--primary">
+                                        <svg width="24" height="24" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                            <polyline points="14 2 14 8 20 8"/>
+                                            <line x1="16" y1="13" x2="8" y2="13"/>
+                                            <line x1="16" y1="17" x2="8" y2="17"/>
+                                            <polyline points="10 9 9 9 8 9"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h2 class="receipt-col__title">Folios de Recibo</h2>
+                                        <p class="receipt-col__subtitle">Gestiona los recibos de entrada</p>
+                                    </div>
+                                </div>
+                                <button class="btn receipt-btn receipt-btn--primary" onclick="crearFolioRecibo()">
+                                    <svg width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                                    </svg>
+                                    Crear Folio de Recibo
+                                </button>
+
+                                <!-- Historial recibo -->
+                                <div class="folio-history">
+                                    <div class="folio-history__header">
+                                        <span class="folio-history__label">Historial de Recibos</span>
+                                        <span class="folio-history__badge folio-history__badge--primary" id="badgeRecibo">0</span>
+                                    </div>
+                                    <div class="folio-history__list" id="listaRecibo">
+                                        <div class="folio-history__empty">
+                                            <svg width="40" height="40" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                                <polyline points="14 2 14 8 20 8"/>
+                                            </svg>
+                                            <p>Sin folios de recibo aún</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Columna MERMA -->
+                            <div class="receipt-col">
+                                <div class="receipt-col__header">
+                                    <div class="receipt-col__icon receipt-col__icon--danger">
+                                        <svg width="24" height="24" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="3 6 5 6 21 6"/>
+                                            <path d="M19 6l-1 14H6L5 6"/>
+                                            <path d="M10 11v6"/><path d="M14 11v6"/>
+                                            <path d="M9 6V4h6v2"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h2 class="receipt-col__title">Folios de Merma</h2>
+                                        <p class="receipt-col__subtitle">Registra las pérdidas y mermas</p>
+                                    </div>
+                                </div>
+                                <button class="btn receipt-btn receipt-btn--danger" onclick="crearFolioMerma()">
+                                    <svg width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                                    </svg>
+                                    Crear Folio de Merma
+                                </button>
+
+                                <!-- Historial merma -->
+                                <div class="folio-history">
+                                    <div class="folio-history__header">
+                                        <span class="folio-history__label">Historial de Mermas</span>
+                                        <span class="folio-history__badge folio-history__badge--danger" id="badgeMerma">0</span>
+                                    </div>
+                                    <div class="folio-history__list" id="listaMerma">
+                                        <div class="folio-history__empty">
+                                            <svg width="40" height="40" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <polyline points="3 6 5 6 21 6"/>
+                                                <path d="M19 6l-1 14H6L5 6"/>
+                                            </svg>
+                                            <p>Sin folios de merma aún</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Recibo/Merma -->
+                        <div id="folioModal" class="folio-modal-overlay hidden">
+                            <div class="folio-modal">
+
+                                <!-- Header -->
+                                <div class="folio-modal__header" id="folioModalHeader">
+                                    <div class="folio-modal__title-group">
+                                        <div class="folio-modal__icon" id="folioModalIcon"></div>
+                                        <div>
+                                            <h2 class="folio-modal__title" id="folioModalTitle"></h2>
+                                            <p class="folio-modal__subtitle" id="folioModalSubtitle"></p>
+                                        </div>
+                                    </div>
+                                    <button class="folio-modal__close" onclick="cerrarFolioModal()">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"/>
+                                            <line x1="6" y1="6" x2="18" y2="18"/>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Buscador dentro del modal -->
+                                <div class="folio-modal__search">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                    </svg>
+                                    <input type="text" id="folioSearchInput" placeholder="Buscar producto..."
+                                        oninput="filtrarProductosModal()" />
+                                </div>
+
+                                <!-- Lista de productos -->
+                                <div class="folio-modal__products" id="folioProductsList"></div>
+
+                                <!-- Footer -->
+                                <div class="folio-modal__footer">
+                                    <span class="folio-modal__selected-count" id="folioSelectedCount">0 productos seleccionados</span>
+                                    <div class="folio-modal__actions">
+                                        <button class="btn folio-btn-cancel" onclick="cerrarFolioModal()">Cancelar</button>
+                                        <button class="btn folio-btn-confirm" id="folioConfirmBtn" onclick="confirmarFolio()"></button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
                         <!-- ========================
                             PANTALLA DE CONFIGURACION 
                         ============================ -->

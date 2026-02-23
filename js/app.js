@@ -589,6 +589,305 @@ function renderReportsScreen() {
     screen.classList.remove('hidden');
 }
 
+//  SISTEMA DE FOLIOS — Recibo y Merma
+
+// Llaves de localStorage para folios
+const FOLIO_KEYS = {
+    RECIBOS: 'posApp_foliosRecibo',
+    MERMAS:  'posApp_foliosMerma'
+};
+
+// Estado del modal activo
+let folioTipoActual = null;         // 'recibo' | 'merma'
+let folioSeleccion = {};            // { productId: cantidad }
+
+// Contadores persistentes
+function cargarContadorFolios() {
+    const recibos = cargarFoliosDelStorage(FOLIO_KEYS.RECIBOS);
+    const mermas  = cargarFoliosDelStorage(FOLIO_KEYS.MERMAS);
+
+    document.getElementById('badgeRecibo').textContent = recibos.length;
+    document.getElementById('badgeMerma').textContent  = mermas.length;
+
+    renderizarHistorialFolios('listaRecibo', 'badgeRecibo', recibos, 'primary');
+    renderizarHistorialFolios('listaMerma',  'badgeMerma',  mermas,  'danger');
+}
+
+function cargarFoliosDelStorage(key) {
+    try {
+        return JSON.parse(localStorage.getItem(key)) || [];
+    } catch {
+        return [];
+    }
+}
+
+function guardarFolioEnStorage(key, folio) {
+    const lista = cargarFoliosDelStorage(key);
+    lista.unshift(folio); // más reciente primero
+    localStorage.setItem(key, JSON.stringify(lista));
+}
+
+// Abrir modal
+function crearFolioRecibo() {
+    abrirFolioModal('recibo');
+}
+
+function crearFolioMerma() {
+    abrirFolioModal('merma');
+}
+
+function abrirFolioModal(tipo) {
+    folioTipoActual = tipo;
+    folioSeleccion  = {};
+
+    const esRecibo = tipo === 'recibo';
+
+    // Configurar cabecera del modal
+    document.getElementById('folioModalIcon').innerHTML = esRecibo
+        ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`
+        : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+
+    document.getElementById('folioModalIcon').className =
+        `folio-modal__icon folio-modal__icon--${esRecibo ? 'primary' : 'danger'}`;
+
+    document.getElementById('folioModalTitle').textContent =
+        esRecibo ? 'Nuevo Folio de Recibo' : 'Nuevo Folio de Merma';
+
+    document.getElementById('folioModalSubtitle').textContent =
+        esRecibo
+            ? 'Selecciona los productos que ingresan al inventario'
+            : 'Selecciona los productos a dar de baja por merma';
+
+    document.getElementById('folioConfirmBtn').textContent =
+        esRecibo ? '✔ Confirmar Recibo' : '✔ Confirmar Merma';
+
+    document.getElementById('folioConfirmBtn').className =
+        `btn folio-btn-confirm folio-btn-confirm--${esRecibo ? 'primary' : 'danger'}`;
+
+    document.getElementById('folioSearchInput').value = '';
+    document.getElementById('folioSelectedCount').textContent = '0 productos seleccionados';
+
+    renderizarProductosModal('');
+    document.getElementById('folioModal').classList.remove('hidden');
+}
+
+function cerrarFolioModal() {
+    document.getElementById('folioModal').classList.add('hidden');
+    folioTipoActual = null;
+    folioSeleccion  = {};
+}
+
+// Renderizar productos dentro del modal
+function renderizarProductosModal(filtro) {
+    const lista = document.getElementById('folioProductsList');
+    lista.innerHTML = '';
+
+    const productosActivos = productsData.filter(p =>
+        p.active &&
+        p.name.toLowerCase().includes(filtro.toLowerCase())
+    );
+
+    if (productosActivos.length === 0) {
+        lista.innerHTML = `<div class="folio-no-results">Sin resultados para "${filtro}"</div>`;
+        return;
+    }
+
+    productosActivos.forEach(producto => {
+        const cantidadActual = folioSeleccion[producto.id] || 0;
+        const row = document.createElement('div');
+        row.className = 'folio-product-row';
+        row.id = `folioRow-${producto.id}`;
+
+        row.innerHTML = `
+            <div class="folio-product-info">
+                <span class="folio-product-emoji">${producto.emoji}</span>
+                <div>
+                    <div class="folio-product-name">${producto.name}</div>
+                    <div class="folio-product-stock">Stock actual: <strong>${producto.stock}</strong></div>
+                </div>
+            </div>
+            <div class="folio-product-qty">
+                <button class="folio-qty-btn folio-qty-btn--minus"
+                    onclick="cambiarCantidadFolio(${producto.id}, -1)"
+                    ${cantidadActual === 0 ? 'disabled' : ''}>−</button>
+                <input
+                    type="number"
+                    min="0"
+                    class="folio-qty-input"
+                    id="folioQty-${producto.id}"
+                    value="${cantidadActual}"
+                    oninput="setCantidadFolio(${producto.id}, this.value)"
+                />
+                <button class="folio-qty-btn folio-qty-btn--plus"
+                    onclick="cambiarCantidadFolio(${producto.id}, 1)">+</button>
+            </div>
+        `;
+
+        if (cantidadActual > 0) row.classList.add('folio-product-row--selected');
+        lista.appendChild(row);
+    });
+}
+
+function filtrarProductosModal() {
+    const filtro = document.getElementById('folioSearchInput').value;
+    renderizarProductosModal(filtro);
+}
+
+// Manejo de cantidades
+function cambiarCantidadFolio(productoId, delta) {
+    const actual = folioSeleccion[productoId] || 0;
+    const nuevo  = Math.max(0, actual + delta);
+    folioSeleccion[productoId] = nuevo;
+    actualizarFilaFolio(productoId);
+    actualizarContadorSeleccion();
+}
+
+function setCantidadFolio(productoId, valor) {
+    const parsed = parseInt(valor);
+    folioSeleccion[productoId] = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+    actualizarFilaFolio(productoId);
+    actualizarContadorSeleccion();
+}
+
+function actualizarFilaFolio(productoId) {
+    const cantidad = folioSeleccion[productoId] || 0;
+    const input    = document.getElementById(`folioQty-${productoId}`);
+    const row      = document.getElementById(`folioRow-${productoId}`);
+    const btnMinus = row?.querySelector('.folio-qty-btn--minus');
+
+    if (input) input.value = cantidad;
+    if (row)   row.classList.toggle('folio-product-row--selected', cantidad > 0);
+    if (btnMinus) btnMinus.disabled = cantidad === 0;
+}
+
+function actualizarContadorSeleccion() {
+    const total = Object.values(folioSeleccion).reduce((sum, v) => sum + (v > 0 ? 1 : 0), 0);
+    document.getElementById('folioSelectedCount').textContent =
+        `${total} producto${total !== 1 ? 's' : ''} seleccionado${total !== 1 ? 's' : ''}`;
+}
+
+// Confirmar folio y actualizar stock
+function confirmarFolio() {
+    const productosConCantidad = Object.entries(folioSeleccion)
+        .filter(([, qty]) => qty > 0)
+        .map(([id, qty]) => ({ id: parseInt(id), qty }));
+
+    if (productosConCantidad.length === 0) {
+        alert('Debes seleccionar al menos un producto con cantidad mayor a 0.');
+        return;
+    }
+
+    const esRecibo = folioTipoActual === 'recibo';
+    const itemsFolio = [];
+
+    // Validar stock suficiente en caso de merma
+    if (!esRecibo) {
+        for (const { id, qty } of productosConCantidad) {
+            const producto = productsData.find(p => p.id === id);
+            if (producto && producto.stock < qty) {
+                alert(`Stock insuficiente para "${producto.name}".\nStock actual: ${producto.stock} | Merma solicitada: ${qty}`);
+                return;
+            }
+        }
+    }
+
+    // Actualizar stock
+    productosConCantidad.forEach(({ id, qty }) => {
+        const producto = productsData.find(p => p.id === id);
+        if (!producto) return;
+
+        const stockAnterior = producto.stock;
+        producto.stock = esRecibo
+            ? producto.stock + qty
+            : producto.stock - qty;
+
+        itemsFolio.push({
+            id:             producto.id,
+            nombre:         producto.name,
+            emoji:          producto.emoji,
+            cantidad:       qty,
+            stockAnterior,
+            stockNuevo:     producto.stock
+        });
+    });
+
+    // Guardar productos en localStorage
+    saveProducts();
+
+    // Generar y guardar folio
+    const storageKey = esRecibo ? FOLIO_KEYS.RECIBOS : FOLIO_KEYS.MERMAS;
+    const listasEnStorage = cargarFoliosDelStorage(storageKey);
+    const numeracion = listasEnStorage.length + 1;
+
+    const folio = {
+        folio:  esRecibo
+            ? `REC-${String(numeracion).padStart(4, '0')}`
+            : `MER-${String(numeracion).padStart(4, '0')}`,
+        fecha:  new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }),
+        hora:   new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+        items:  itemsFolio
+    };
+
+    guardarFolioEnStorage(storageKey, folio);
+
+    // Refrescar UI
+    const listaId  = esRecibo ? 'listaRecibo'  : 'listaMerma';
+    const badgeId  = esRecibo ? 'badgeRecibo'  : 'badgeMerma';
+    const tipo     = esRecibo ? 'primary'       : 'danger';
+    const foliosActualizados = cargarFoliosDelStorage(storageKey);
+
+    renderizarHistorialFolios(listaId, badgeId, foliosActualizados, tipo);
+    renderProducts();        // Actualiza el POS
+    renderProductsTable();   // Actualiza tabla de admin
+
+    cerrarFolioModal();
+}
+
+// Renderizar historial de folios
+function renderizarHistorialFolios(listaId, badgeId, folios, tipo) {
+    const lista = document.getElementById(listaId);
+    const badge = document.getElementById(badgeId);
+
+    badge.textContent = folios.length;
+    lista.innerHTML   = '';
+
+    if (folios.length === 0) {
+        const etiqueta = tipo === 'primary' ? 'recibo' : 'merma';
+        lista.innerHTML = `
+            <div class="folio-history__empty">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <p>Sin folios de ${etiqueta} aún</p>
+            </div>`;
+        return;
+    }
+
+    folios.forEach(folio => {
+        const item = document.createElement('div');
+        item.className = `folio-item folio-item--${tipo}`;
+
+        const resumen = folio.items.map(i =>
+            `${i.emoji} ${i.nombre} (${i.cantidad > 0 && tipo === 'primary' ? '+' : '-'}${i.cantidad})`
+        ).join(', ');
+
+        item.innerHTML = `
+            <div class="folio-item__left">
+                <span class="folio-item__numero">${folio.folio}</span>
+                <span class="folio-item__fecha">${folio.fecha}</span>
+                <span class="folio-item__detalle" title="${resumen}">${resumen}</span>
+            </div>
+            <div class="folio-item__right">
+                <span class="folio-item__hora">${folio.hora}</span>
+                <span class="folio-item__status">Aplicado</span>
+            </div>`;
+
+        lista.appendChild(item);
+    });
+}
+
 // Gestión de productos
 function renderProductsTable(){ 
     const tableBody = document.getElementById('productsTable');
