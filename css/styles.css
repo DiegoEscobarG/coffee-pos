@@ -951,6 +951,174 @@ body{
     font-size: 16px;
 }
 
+/* Reportes: wrapper y encabezados de sección */
+.reports-wrapper {
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.reports-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    margin-bottom: 4px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.reports-section-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.reports-section-header--yesterday h2 {
+    color: var(--color-text-muted);
+}
+
+.reports-date-badge {
+    margin-left: auto;
+    background: rgba(107, 68, 35, 0.1);
+    color: var(--color-primary);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.reports-date-badge--yesterday {
+    background: rgba(115,107,94,0.1);
+    color: var(--color-text-muted);
+}
+
+.sales-history-card {
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+}
+
+.sales-history-card--yesterday {
+    opacity: 0.85;
+}
+
+.sales-history-card__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--color-text);
+}
+
+.sales-history-badge {
+    margin-left: auto;
+    background: var(--color-primary);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 12px;
+}
+
+.sales-history-card__body {
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+.sale-history-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--color-border);
+    gap: 12px;
+    transition: background 0.15s;
+}
+
+.sale-history-row:last-child {
+    border-bottom: none;
+}
+
+.sale-history-row:hover {
+    background: var(--color-bg);
+}
+
+.sale-history-row__left {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.sale-history-row__num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    padding: 3px 7px;
+    border-radius: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.sale-history-row__detail {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.sale-history-row__products {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.sale-item-tag {
+    background: rgba(107, 68, 35, 0.08);
+    color: var(--color-primary);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.sale-history-row__meta {
+    font-size: 12px;
+    color: var(--color-text-muted);
+}
+
+.sale-history-row__total {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-success);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.sales-history-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: var(--color-text-muted);
+    gap: 10px;
+    font-size: 14px;
+}
+
 /*Recibo*/
 .receipt-container {
     padding: 24px;

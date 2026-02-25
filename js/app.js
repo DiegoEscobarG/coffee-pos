@@ -57,7 +57,9 @@ const STORAGE_KEYS = {
     PRODUCTS: 'posApp_products',
     SALES_HISTORY: 'posApp_salesHistory',
     CART: 'posApp_cart',
-    CATEGORY: 'posApp_currentCategory'
+    CATEGORY: 'posApp_currentCategory',
+    YESTERDAY_SALES: 'posApp_yesterdaySales',
+    LAST_RESET_DATE: 'posApp_lastResetDate'
 };
 
 
@@ -82,6 +84,7 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     cart = [];
     document.getElementById('loginScreen').classList.remove('hidden');
     document.getElementById('posScreen').classList.add('hidden');
+    document.getElementById('app-container').classList.add('hidden');
     document.getElementById('loginForm').reset();
 })
 
@@ -113,6 +116,12 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 
     // Cargar historial de folios (Recibos y Mermas)
     cargarContadorFolios();
+
+    // Verificar reset de medianoche al iniciar
+    checkMidnightReset();
+
+    // Comprobar el reset cada minuto (atrapa el cambio de día aunque la app esté abierta)
+    setInterval(checkMidnightReset, 60000);
 
 }
 
@@ -545,106 +554,218 @@ function processPayment() {
     console.log('Imprimir ticket...');
 }
 
-// Generador de reportes
-function renderReportsScreen() {
-    const screen = document.getElementById('reportsScreen');
-    
-    // --- 1. CÁLCULOS MATEMÁTICOS ---
-    
-    // Filtramos ventas de hoy (Opcional: si quieres histórico total, quita el filtro)
+// RESET DE MEDIANOCHE
+// Comprueba si ya es un día nuevo; si lo es, mueve las ventas de hoy a "ayer"
+// y limpia el historial del día actual.
+function checkMidnightReset() {
     const today = new Date().toLocaleDateString();
-    const todaysSales = salesHistory.filter(s => s.date === today);
+    const lastReset = localStorage.getItem(STORAGE_KEYS.LAST_RESET_DATE);
 
-    // A) Ventas Totales ($)
-    const totalSales = todaysSales.reduce((acc, sale) => acc + sale.total, 0);
+    if (lastReset && lastReset !== today) {
+        // Guardar ventas del día anterior en su propia llave
+        const storedHistory = JSON.parse(localStorage.getItem(STORAGE_KEYS.SALES_HISTORY)) || [];
+        const yesterdayDate = lastReset;
+        const yesterdaySales = storedHistory.filter(s => s.date === yesterdayDate);
 
-    // B) Total de Ordenes (Tickets)
-    const totalOrders = todaysSales.length;
+        localStorage.setItem(STORAGE_KEYS.YESTERDAY_SALES, JSON.stringify({
+            date: yesterdayDate,
+            sales: yesterdaySales
+        }));
 
-    // C) Ticket Promedio
-    const averageTicket = totalOrders > 0 ? (totalSales / totalOrders) : 0;
+        // Reiniciar historial — solo quedan ventas de hoy (si las hubiera del mismo día)
+        const todaySales = storedHistory.filter(s => s.date === today);
+        salesHistory = todaySales;
+        localStorage.setItem(STORAGE_KEYS.SALES_HISTORY, JSON.stringify(salesHistory));
+    }
 
-    // D) Producto Más Vendido
+    // Actualizar la fecha del último reset
+    localStorage.setItem(STORAGE_KEYS.LAST_RESET_DATE, today);
+}
+
+// Calcular stats a partir de un array de ventas
+function calcularStats(ventas) {
+    const totalSales   = ventas.reduce((acc, s) => acc + s.total, 0);
+    const totalOrders  = ventas.length;
+    const averageTicket = totalOrders > 0 ? totalSales / totalOrders : 0;
+
     let productCounts = {};
-    todaysSales.forEach(sale => {
+    ventas.forEach(sale => {
         sale.items.forEach(item => {
             productCounts[item.name] = (productCounts[item.name] || 0) + item.quantity;
         });
     });
-    
-    // Buscar cuál tiene el número más alto
+
     let topProduct = 'N/A';
     let maxCount = 0;
-    
     for (const [name, count] of Object.entries(productCounts)) {
-        if (count > maxCount) {
-            maxCount = count;
-            topProduct = name;
-        }
+        if (count > maxCount) { maxCount = count; topProduct = name; }
     }
 
-    // --- 2. GENERACIÓN DEL HTML ---
-    
+    return { totalSales, totalOrders, averageTicket, topProduct };
+}
+
+// Generar HTML de las 4 tarjetas de stats
+function buildStatsGridHTML(stats, labelPrefix) {
+    return `
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#2D7A4F">
+                    <svg viewBox="0 0 24 24" fill="white"><path d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/></svg>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-label">Ventas ${labelPrefix}</div>
+                    <div class="stat-value">$${stats.totalSales.toFixed(2)}</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#D97706">
+                    <svg viewBox="0 0 24 24" fill="white"><path d="M17,18A2,2 0 0,1 19,20A2,2 0 0,1 17,22C15.89,22 15,21.1 15,20C15,18.89 15.89,18 17,18M1,2H4.27L5.21,4H20A1,1 0 0,1 21,5C21,5.17 20.95,5.34 20.88,5.5L17.3,11.97C16.96,12.58 16.3,13 15.55,13H8.1L7.2,14.63L7.17,14.75A0.25,0.25 0 0,0 7.42,15H19V17H7C5.89,17 5,16.1 5,15C5,14.65 5.09,14.32 5.24,14.04L6.6,11.59L3,4H1V2M7,18A2,2 0 0,1 9,20A2,2 0 0,1 7,22C5.89,22 5,21.1 5,20C5,18.89 5.89,18 7,18M16,11L18.78,6H6.14L8.5,11H16Z"/></svg>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-label">Órdenes ${labelPrefix}</div>
+                    <div class="stat-value">${stats.totalOrders}</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#7C3AED">
+                    <svg viewBox="0 0 24 24" fill="white"><path d="M2,21H20V19H2M20,8H18V5H20M20,3H4V13A4,4 0 0,0 8,17H14A4,4 0 0,0 18,13V10H20A2,2 0 0,0 22,8V5C22,3.89 21.1,3 20,3Z"/></svg>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-label">Producto Top</div>
+                    <div class="stat-value">${stats.topProduct}</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#DC2626">
+                    <svg viewBox="0 0 24 24" fill="white"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z"/></svg>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-label">Ticket Promedio</div>
+                    <div class="stat-value">$${stats.averageTicket.toFixed(2)}</div>
+                </div>
+            </div>
+        </div>`;
+}
+
+// Generar HTML del historial de ventas individuales
+function buildSalesHistoryHTML(ventas) {
+    if (ventas.length === 0) {
+        return `<div class="sales-history-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                <rect x="9" y="3" width="6" height="4" rx="1"/>
+            </svg>
+            <p>Sin ventas registradas</p>
+        </div>`;
+    }
+
+    // Más recientes primero
+    const sorted = [...ventas].reverse();
+
+    return sorted.map((sale, idx) => {
+        const productosList = sale.items.map(item =>
+            `<span class="sale-item-tag">${item.emoji || '☕'} ${item.name} ×${item.quantity}</span>`
+        ).join('');
+
+        const totalUnits = sale.items.reduce((s, i) => s + i.quantity, 0);
+        const num = ventas.length - idx;
+
+        return `
+        <div class="sale-history-row">
+            <div class="sale-history-row__left">
+                <span class="sale-history-row__num">#${String(num).padStart(3,'0')}</span>
+                <div class="sale-history-row__detail">
+                    <div class="sale-history-row__products">${productosList}</div>
+                    <div class="sale-history-row__meta">${totalUnits} unidad${totalUnits !== 1 ? 'es' : ''} · ${sale.date}</div>
+                </div>
+            </div>
+            <div class="sale-history-row__total">$${sale.total.toFixed(2)}</div>
+        </div>`;
+    }).join('');
+}
+
+// Generador de reportes
+function renderReportsScreen() {
+    // Verificar reset de medianoche antes de renderizar
+    checkMidnightReset();
+
+    const screen = document.getElementById('reportsScreen');
+    const today  = new Date().toLocaleDateString();
+
+    // ── VENTAS HOY ──
+    const todaysSales = salesHistory.filter(s => s.date === today);
+    const statsHoy    = calcularStats(todaysSales);
+
+    // ── VENTAS AYER ──
+    const yesterdayData = JSON.parse(localStorage.getItem(STORAGE_KEYS.YESTERDAY_SALES)) || { date: null, sales: [] };
+    const statsAyer     = calcularStats(yesterdayData.sales);
+    const labelAyer     = yesterdayData.date
+        ? `Ayer (${yesterdayData.date})`
+        : 'Sin datos de ayer';
+
     screen.innerHTML = `
-        <div id="reportsScreen" class="screen-content">
-                    <div class="reports-container">
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-icon" style="background: #2D7A4F;">
-                                    <svg viewBox="0 0 24 24" fill="white">
-                                        <path d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                </div>
-                                <div class="stat-details">
-                                    <div class="stat-label">Ventas Hoy</div>
-                                    <div class="stat-value">$${totalSales.toFixed(2)}</div>
-                                </div>
-                            </div>
-                            
-                            <div class="stat-card">
-                                <div class="stat-icon" style="background: #D97706;">
-                                    <svg viewBox="0 0 24 24" fill="white">
-                                        <path d="M17,18A2,2 0 0,1 19,20A2,2 0 0,1 17,22C15.89,22 15,21.1 15,20C15,18.89 15.89,18 17,18M1,2H4.27L5.21,4H20A1,1 0 0,1 21,5C21,5.17 20.95,5.34 20.88,5.5L17.3,11.97C16.96,12.58 16.3,13 15.55,13H8.1L7.2,14.63L7.17,14.75A0.25,0.25 0 0,0 7.42,15H19V17H7C5.89,17 5,16.1 5,15C5,14.65 5.09,14.32 5.24,14.04L6.6,11.59L3,4H1V2M7,18A2,2 0 0,1 9,20A2,2 0 0,1 7,22C5.89,22 5,21.1 5,20C5,18.89 5.89,18 7,18M16,11L18.78,6H6.14L8.5,11H16Z"/>
-                                    </svg>
-                                </div>
-                                <div class="stat-details">
-                                    <div class="stat-label">Órdenes Hoy</div>
-                                    <div class="stat-value">${totalOrders}</div>
-                                </div>
-                            </div>
-                            
-                            <div class="stat-card">
-                                <div class="stat-icon" style="background: #7C3AED;">
-                                    <svg viewBox="0 0 24 24" fill="white">
-                                        <path d="M2,21H20V19H2M20,8H18V5H20M20,3H4V13A4,4 0 0,0 8,17H14A4,4 0 0,0 18,13V10H20A2,2 0 0,0 22,8V5C22,3.89 21.1,3 20,3Z"/>
-                                    </svg>
-                                </div>
-                                <div class="stat-details">
-                                    <div class="stat-label">Producto Top</div>
-                                    <div class="stat-value">${topProduct}</div>
-                                </div>
-                            </div>
-                            
-                            <div class="stat-card">
-                                <div class="stat-icon" style="background: #DC2626;">
-                                    <svg viewBox="0 0 24 24" fill="white">
-                                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z"/>
-                                    </svg>
-                                </div>
-                                <div class="stat-details">
-                                    <div class="stat-label">Ticket Promedio</div>
-                                    <div class="stat-value">$${averageTicket.toFixed(2)}</div>
-                                </div>
-                            </div>
-                        </div>
+        <div class="reports-wrapper">
+
+            <!-- ══ SECCIÓN HOY ══ -->
+            <div class="reports-section-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:var(--color-primary)">
+                    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/>
+                </svg>
+                <h2>Ventas de Hoy</h2>
+                <span class="reports-date-badge">${today}</span>
+            </div>
+
+            <div class="reports-container">
+                ${buildStatsGridHTML(statsHoy, 'Hoy')}
+            </div>
+
+            <!-- Historial de cobros de hoy -->
+            <div class="reports-container">
+                <div class="sales-history-card">
+                    <div class="sales-history-card__header">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9,5H7A2,2 0 0,0 5,7V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V7A2,2 0 0,0 17,5H15A2,2 0 0,0 13,3H11A2,2 0 0,0 9,5M11,5H13V7H11V5M7,9H17V11H7V9M7,13H17V15H7V13M7,17H14V19H7V17Z"/>
+                        </svg>
+                        <span>Historial de Cobros — Hoy</span>
+                        <span class="sales-history-badge">${todaysSales.length}</span>
+                    </div>
+                    <div class="sales-history-card__body">
+                        ${buildSalesHistoryHTML(todaysSales)}
                     </div>
                 </div>
+            </div>
+
+            <!-- ══ SECCIÓN AYER ══ -->
+            <div class="reports-section-header reports-section-header--yesterday">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11,7V12.11L15.71,14.9L16.5,13.62L12.5,11.25V7M12.5,2C8.97,2 5.91,3.96 4.27,6.95H2L5.08,10.03L8.16,6.95H6C7.39,4.65 9.78,3.13 12.5,3.13C16.65,3.13 20,6.48 20,10.63C20,14.78 16.65,18.13 12.5,18.13C9.78,18.13 7.39,16.61 6,14.31H4.54C6.18,17.3 9.1,19.25 12.5,19.25C17.25,19.25 21.13,15.38 21.13,10.63C21.13,5.88 17.25,2 12.5,2Z"/>
+                </svg>
+                <h2>Ventas de Ayer</h2>
+                <span class="reports-date-badge reports-date-badge--yesterday">${labelAyer}</span>
+            </div>
+
+            <div class="reports-container">
+                ${buildStatsGridHTML(statsAyer, 'Ayer')}
+            </div>
+
+            <!-- Historial de cobros de ayer -->
+            <div class="reports-container">
+                <div class="sales-history-card sales-history-card--yesterday">
+                    <div class="sales-history-card__header">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9,5H7A2,2 0 0,0 5,7V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V7A2,2 0 0,0 17,5H15A2,2 0 0,0 13,3H11A2,2 0 0,0 9,5M11,5H13V7H11V5M7,9H17V11H7V9M7,13H17V15H7V13M7,17H14V19H7V17Z"/>
+                        </svg>
+                        <span>Historial de Cobros — Ayer</span>
+                        <span class="sales-history-badge">${yesterdayData.sales.length}</span>
+                    </div>
+                    <div class="sales-history-card__body">
+                        ${buildSalesHistoryHTML(yesterdayData.sales)}
+                    </div>
+                </div>
+            </div>
+
+        </div>
     `;
-    
-    // Importante: Asegurar que se muestre la pantalla
-    // (Esto asume que manejas la navegación ocultando/mostrando clases)
-    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-    screen.classList.remove('hidden');
 }
 
 //  SISTEMA DE FOLIOS — Recibo y Merma
